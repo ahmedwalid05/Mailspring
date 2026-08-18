@@ -378,13 +378,19 @@ class DraftFactory {
     const account = AccountStore.accountForId(message.accountId);
     const defaultMe = account.defaultMe();
 
+    const emailsEqual = (a: string, b: string) =>
+      (a || '').toLowerCase().trim() === (b || '').toLowerCase().trim();
+
+    const recipients = [...message.to, ...message.cc, ...message.bcc];
+
     let result = defaultMe;
+    let resultMatchedEmail = false;
 
     for (const aliasString of account.aliases) {
       const alias = account.meUsingAlias(aliasString);
-      for (const recipient of [...message.to, ...message.cc]) {
-        const emailIsNotDefault = alias.email !== defaultMe.email;
-        const emailsMatch = recipient.email === alias.email;
+      for (const recipient of recipients) {
+        const emailIsNotDefault = !emailsEqual(alias.email, defaultMe.email);
+        const emailsMatch = emailsEqual(recipient.email, alias.email);
         const nameIsNotDefault = alias.name !== defaultMe.name;
         const namesMatch = recipient.name === alias.name;
 
@@ -398,9 +404,36 @@ class DraftFactory {
         // Continue iterating and wait to see.
         if ((emailsMatch && emailIsNotDefault) || (namesMatch && nameIsNotDefault)) {
           result = alias;
+          resultMatchedEmail = resultMatchedEmail || emailsMatch;
         }
       }
     }
+
+    // None of the account's addresses appear verbatim in the recipients. If the
+    // message was delivered to a plus-addressed variant of one of them (eg:
+    // you+newsletters@gmail.com), reply from the exact address it was sent to so
+    // the recipient sees the alias they used.
+    if (!resultMatchedEmail) {
+      const identities = [defaultMe, ...account.aliases.map((a) => account.meUsingAlias(a))];
+      for (const recipient of recipients) {
+        if (!recipient.email || !recipient.email.includes('+')) {
+          continue;
+        }
+        const identity = identities.find(
+          (i) =>
+            !emailsEqual(i.email, recipient.email) &&
+            Utils.emailIsEquivalent(i.email, recipient.email)
+        );
+        if (identity) {
+          return new Contact({
+            name: identity.name,
+            email: recipient.email.trim(),
+            accountId: account.id,
+          });
+        }
+      }
+    }
+
     return result;
   }
 
