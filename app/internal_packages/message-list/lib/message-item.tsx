@@ -14,6 +14,7 @@ import MessageParticipants from './message-participants';
 import MessageItemBody from './message-item-body';
 import MessageTimestamp from './message-timestamp';
 import MessageControls from './message-controls';
+import MessageAvatar from './message-avatar';
 
 interface MessageItemProps {
   thread: Thread;
@@ -103,6 +104,14 @@ export default class MessageItem extends React.Component<MessageItemProps, Messa
     });
   };
 
+  _avatarContact() {
+    if (!AppEnv.config.get('core.reading.showContactAvatars')) {
+      return null;
+    }
+    const { from } = this.props.message;
+    return (from && from[0]) || null;
+  }
+
   _renderDownloadAllButton() {
     return (
       <div className="download-all">
@@ -171,17 +180,19 @@ export default class MessageItem extends React.Component<MessageItemProps, Messa
 
   _renderHeader() {
     const { message, thread, messages, pending } = this.props;
+    const avatarContact = this._avatarContact();
 
     return (
       <header
         ref={(el) => (this._headerEl = el)}
-        className={`message-header ${pending && 'pending'}`}
+        className={`message-header ${pending && 'pending'} ${avatarContact ? 'with-avatar' : ''}`}
         onClick={this._onClickHeader}
       >
         <InjectedComponent
           matching={{ role: 'MessageHeader' }}
           exposedProps={{ message: message, thread: thread, messages: messages }}
         />
+        {avatarContact && <MessageAvatar contact={avatarContact} />}
         <div className="pending-spinner" style={{ position: 'absolute', marginTop: -2 }}>
           <RetinaImg width={18} name="sending-spinner.gif" mode={RetinaImg.Mode.ContentPreserve} />
         </div>
@@ -305,6 +316,7 @@ export default class MessageItem extends React.Component<MessageItemProps, Messa
       <div className={className} onClick={this._onToggleCollapsed}>
         <div className="message-item-white-wrap">
           <div className="message-item-area">
+            {this._avatarContact() && <MessageAvatar contact={this._avatarContact()} />}
             <div className="collapsed-from">
               {from &&
                 from[0] &&
