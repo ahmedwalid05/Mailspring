@@ -310,6 +310,16 @@ body.platform-win32 {
       flex-direction: row;
       font-size: @font-size-small;
 
+      .message-avatar {
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        font-size: 8px;
+        font-weight: @font-weight-semi-bold;
+        margin-right: 8px;
+        margin-top: -2px;
+      }
+
       .collapsed-snippet {
         flex: 1;
         white-space: nowrap;
@@ -395,11 +405,50 @@ body.platform-win32 {
     }
   }
 
+  .message-avatar {
+    position: relative;
+    border-radius: 50%;
+    overflow: hidden;
+    text-align: center;
+    color: white;
+    cursor: default;
+    flex-shrink: 0;
+    background-image: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0) 100%
+    );
+
+    .layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-size: cover;
+    }
+  }
+
   .message-header {
     position: relative;
     font-size: @font-size-small;
     padding-bottom: 0;
     padding-top: 19px;
+
+    &.with-avatar {
+      padding-left: 50px;
+
+      > .message-avatar {
+        position: absolute;
+        top: 16px;
+        left: 0;
+        width: 38px;
+        height: 38px;
+        line-height: 38px;
+        font-size: 15px;
+        font-weight: @font-weight-semi-bold;
+      }
+    }
 
     &.pending {
       .message-actions-wrap {
