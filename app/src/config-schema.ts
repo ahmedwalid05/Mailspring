@@ -154,6 +154,11 @@ export default {
             default: false,
             title: localized('Show first and last names of all recipients'),
           },
+          showContactAvatars: {
+            type: 'boolean',
+            default: true,
+            title: localized('Show contact avatars (via Gravatar) in conversations'),
+          },
           restrictMaxWidth: {
             type: 'boolean',
             default: false,
