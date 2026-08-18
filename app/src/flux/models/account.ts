@@ -87,6 +87,10 @@ export class Account extends ModelWithMetadata {
     color: Attributes.String({
       modelKey: 'color',
     }),
+
+    excludedFromUnifiedView: Attributes.Boolean({
+      modelKey: 'excludedFromUnifiedView',
+    }),
   };
 
   public name: string;
@@ -116,6 +120,7 @@ export class Account extends ModelWithMetadata {
   public syncState: string;
   public syncError: MailsyncProcessExit | null;
   public color: string;
+  public excludedFromUnifiedView: boolean;
 
   constructor(args: AttributeValues<typeof Account.attributes>) {
     super(args);
@@ -128,6 +133,7 @@ export class Account extends ModelWithMetadata {
       value: '',
     };
     this.color = this.color || '';
+    this.excludedFromUnifiedView = this.excludedFromUnifiedView || false;
   }
 
   toJSON() {

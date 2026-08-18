@@ -155,6 +155,41 @@ describe('FocusedPerspectiveStore', function () {
     });
   });
 
+  describe('_defaultPerspective', function () {
+    beforeEach(function () {
+      // accountForId memoizes lookups. The spec harness swaps _accounts without
+      // clearing the memo, so drop it to resolve the accounts mutated below.
+      (AccountStore as any)._caches = {};
+    });
+
+    it('omits accounts excluded from the unified view when targeting multiple accounts', function () {
+      const [first, second] = AccountStore.accounts();
+      second.excludedFromUnifiedView = true;
+      spyOn(MailboxPerspective, 'forInbox').andCallThrough();
+
+      FocusedPerspectiveStore._defaultPerspective([first.id, second.id]);
+      expect(MailboxPerspective.forInbox).toHaveBeenCalledWith([first.id]);
+
+      // An explicitly focused single account is never filtered
+      FocusedPerspectiveStore._defaultPerspective([second.id]);
+      expect(MailboxPerspective.forInbox).toHaveBeenCalledWith([second.id]);
+
+      second.excludedFromUnifiedView = false;
+    });
+
+    it('keeps every account when all of them are excluded', function () {
+      const accounts = AccountStore.accounts();
+      accounts.forEach((a) => (a.excludedFromUnifiedView = true));
+      spyOn(MailboxPerspective, 'forInbox').andCallThrough();
+
+      const ids = accounts.map((a) => a.id);
+      FocusedPerspectiveStore._defaultPerspective(ids);
+      expect(MailboxPerspective.forInbox).toHaveBeenCalledWith(ids);
+
+      accounts.forEach((a) => (a.excludedFromUnifiedView = false));
+    });
+  });
+
   describe('_onCategoryStoreChanged', function () {
     it("should try to initialize if the curernt perspective hasn't been fully initialized", function () {
       spyOn(FocusedPerspectiveStore, '_initializeFromSavedState');
