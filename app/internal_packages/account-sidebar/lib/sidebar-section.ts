@@ -93,6 +93,14 @@ class SidebarSection {
       return this.standardSectionForAccount(accounts[0]);
     }
 
+    // Accounts can be individually excluded from the unified mailboxes. They keep
+    // their per-account child items and folder sections so they remain reachable.
+    // If every account is excluded, fall back to showing all of them.
+    let unifiedAccounts = accounts.filter((a) => !a.excludedFromUnifiedView);
+    if (unifiedAccounts.length === 0) {
+      unifiedAccounts = accounts;
+    }
+
     const standardNames = ['inbox', 'important', 'sent', ['archive', 'all'], 'spam', 'trash'];
     const items = [];
 
@@ -101,6 +109,10 @@ class SidebarSection {
       const categories = CategoryStore.getCategoriesWithRoles(accounts, ...names);
       if (categories.length === 0) {
         continue;
+      }
+      let unifiedCategories = CategoryStore.getCategoriesWithRoles(unifiedAccounts, ...names);
+      if (unifiedCategories.length === 0) {
+        unifiedCategories = categories;
       }
 
       children = [];
@@ -120,19 +132,23 @@ class SidebarSection {
       });
 
       items.push(
-        SidebarItem.forCategories(categories, { children, editable: false, deletable: false })
+        SidebarItem.forCategories(unifiedCategories, {
+          children,
+          editable: false,
+          deletable: false,
+        })
       );
     }
 
-    const accountIds = accounts.map((a) => a.id);
+    const unifiedAccountIds = unifiedAccounts.map((a) => a.id);
 
-    const starredItem = SidebarItem.forStarred(accountIds, {
+    const starredItem = SidebarItem.forStarred(unifiedAccountIds, {
       children: accounts.map((acc) => SidebarItem.forStarred([acc.id], { name: acc.label })),
     });
-    const unreadItem = SidebarItem.forUnread(accountIds, {
+    const unreadItem = SidebarItem.forUnread(unifiedAccountIds, {
       children: accounts.map((acc) => SidebarItem.forUnread([acc.id], { name: acc.label })),
     });
-    const draftsItem = SidebarItem.forDrafts(accountIds, {
+    const draftsItem = SidebarItem.forDrafts(unifiedAccountIds, {
       children: accounts.map((acc) => SidebarItem.forDrafts([acc.id], { name: acc.label })),
     });
 
@@ -143,7 +159,7 @@ class SidebarSection {
     ExtensionRegistry.AccountSidebar.extensions()
       .filter((ext) => ext.sidebarItem != null)
       .forEach((ext) => {
-        const { id, name, iconName, perspective, insertAtTop } = ext.sidebarItem(accountIds);
+        const { id, name, iconName, perspective, insertAtTop } = ext.sidebarItem(unifiedAccountIds);
         const item = SidebarItem.forPerspective(id, perspective, {
           name,
           iconName,

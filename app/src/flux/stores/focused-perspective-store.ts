@@ -151,7 +151,21 @@ class FocusedPerspectiveStore extends MailspringStore {
   };
 
   _defaultPerspective(accountsOrIds = AccountStore.accountIds()) {
-    const perspective = MailboxPerspective.forInbox(accountsOrIds);
+    // When targeting the unified view, leave out accounts the user has excluded
+    // from it. An explicitly focused single account is never filtered.
+    let targets = accountsOrIds;
+    if (targets.length > 1) {
+      const included = targets.filter((accountOrId) => {
+        const account =
+          typeof accountOrId === 'string' ? AccountStore.accountForId(accountOrId) : accountOrId;
+        return account && !account.excludedFromUnifiedView;
+      });
+      if (included.length > 0) {
+        targets = included;
+      }
+    }
+
+    const perspective = MailboxPerspective.forInbox(targets);
 
     // If no account ids were selected, or the categories for these accounts have
     // not loaded yet, return forNothing(). This means that the next time the

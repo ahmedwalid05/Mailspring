@@ -363,6 +363,18 @@ class PreferencesAccountDetails extends Component<
             {localized('Reset Account Color')}
           </div>
         </div>
+        <h6>{localized('All Accounts View')}</h6>
+        <div className="item">
+          <input
+            id="account-included-in-unified"
+            type="checkbox"
+            checked={!account.excludedFromUnifiedView}
+            onChange={(e) => this._setStateAndSave({ excludedFromUnifiedView: !e.target.checked })}
+          />
+          <label htmlFor="account-included-in-unified">
+            {localized('Include this account in the unified "All Accounts" view')}
+          </label>
+        </div>
         <h6>{localized('Account Settings')}</h6>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           <div className="btn" onClick={this._onManageContacts}>
