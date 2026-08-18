@@ -660,7 +660,7 @@ describe('DraftFactory', function draftFactory() {
     it('should work correctly in a range of test cases', () => {
       // Note: These specs are based on the second account hard-coded in SpecHelper
       account = AccountStore.accounts()[1];
-      const cases = [
+      const cases: { to: Contact[]; cc: Contact[]; bcc?: Contact[]; expected: Contact }[] = [
         {
           to: [new Contact({ name: 'Ben', email: 'ben@mailspring.com' })], // user is not present, must have been BCC'd
           cc: [],
@@ -691,13 +691,35 @@ describe('DraftFactory', function draftFactory() {
           cc: [new Contact({ email: 'second+third@gmail.com' })], // exact alias match, but in CC
           expected: new Contact({ name: 'Second', email: 'second+third@gmail.com' }),
         },
+        {
+          to: [new Contact({ email: 'Second+Alternate@Gmail.com' })], // alias match with different casing
+          cc: [],
+          expected: new Contact({ name: 'Second Alternate', email: 'second+alternate@gmail.com' }),
+        },
+        {
+          to: [new Contact({ email: 'ben@mailspring.com' })],
+          cc: [],
+          bcc: [new Contact({ email: 'second+third@gmail.com' })], // exact alias match, but in BCC
+          expected: new Contact({ name: 'Second', email: 'second+third@gmail.com' }),
+        },
+        {
+          to: [new Contact({ email: 'second+shopping@gmail.com' })], // plus-addressed variant of the account address
+          cc: [],
+          expected: new Contact({ name: 'Second', email: 'second+shopping@gmail.com' }),
+        },
+        {
+          to: [new Contact({ name: 'Second Support', email: 'other@example.com' })], // name-only match is weaker than a plus-addressed mailbox match
+          cc: [new Contact({ email: 'second+news@gmail.com' })],
+          expected: new Contact({ name: 'Second', email: 'second+news@gmail.com' }),
+        },
       ];
-      cases.forEach(({ to, cc, expected }) => {
+      cases.forEach(({ to, cc, bcc, expected }) => {
         const contact = DraftFactory._fromContactForReply(
           new Message({
             accountId: account.id,
             to: to,
             cc: cc,
+            bcc: bcc,
           })
         );
         expect(contact.name).toEqual(expected.name);
